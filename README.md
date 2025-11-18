@@ -27,8 +27,6 @@ Skillix uses a multi-agent architecture where each agent has a clearly defined r
 
 Agents communicate sequentially and in loops (e.g., Teaching → Evaluating → Teaching again with adjusted difficulty), demonstrating sequential agents, loop agents, session & memory management, custom tools, and long-term memory.
 
-> Need to add the flow chart
-
 ### Key ADK concepts demonstrated
 
 - Multi-agent system with sequential and loop agents  
