@@ -1,4 +1,4 @@
-# Manages the InMemorySessionService for the agents
+# Memory Service for agents are defined here
 
 from google.adk.sessions import InMemorySessionService
 

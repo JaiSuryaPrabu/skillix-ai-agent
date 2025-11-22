@@ -1,1 +1,0 @@
-# Short term and Long term memory bank for agents are defined here

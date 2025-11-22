@@ -16,7 +16,7 @@ High-quality human tutoring is proven to be the most effective learning interven
 ### Solution Statement
 Skillix uses a multi-agent architecture where each agent has a clearly defined role, allowing the system to handle the end-to-end complexity of personalized education:
 
-1. **Orchestrator Agent** – Acts as the “tutor session manager” that gathers initial user preferences and coordinates the entire workflow.
+1. **Orchestrator Agent** – Acts as the “tutor session manager” that gathers initial user preferences and coordinates the entire workflow dynamically.
 2. **Context Gathering Agent** – Searches the web, curates high-quality resources, and builds a rich knowledge base stored in long-term memory.
 3. **Planning Agent** – Designs a personalized syllabus/roadmap based on the gathered context, user’s current knowledge level, and preferred learning style (theory-first, application-first, or hybrid).
 4. **Teaching Agent** – Runs the interactive session using Socratic questioning and active recall. It forces the student to think instead of passively receiving information. Uses long-term memory for context and session state to remember everything that happened in previous interactions.
@@ -25,11 +25,11 @@ Skillix uses a multi-agent architecture where each agent has a clearly defined r
 
 ![Flowchart](assets/flow_chart.png)
 
-Agents communicate sequentially and in loops (e.g., Teaching → Evaluating → Teaching again with adjusted difficulty), demonstrating sequential agents, loop agents, session & memory management, custom tools, and long-term memory.
+Agents communicate sequentially and in parallels (e.g., Teaching → Evaluating → Teaching again with adjusted difficulty), demonstrating sequential agents, parallel agents, session & memory management, custom tools, and long-term memory.
 
 ### Key ADK concepts demonstrated
 
-- Multi-agent system with sequential and loop agents  
+- Multi-agent system with sequential and parallel agents  
 - Sub-agents and delegation  
 - Tools (web search via custom Google Search tool, custom evaluation scorer, memory read/write tools)  
 - Sessions & state management (InMemorySessionService)  
@@ -38,7 +38,7 @@ Agents communicate sequentially and in loops (e.g., Teaching → Evaluating → 
 - Observability (structured logging of every agent turn and score)
 
 ### Essential Tools Implemented
-- Web research tool (using Google Search / SerpAPI wrapper)  
+- Web research tool (using Google Search)  
 - Memory read/write tools (short-term session + long-term Memory Bank)  
 - Custom evaluation tool that returns a structured score (0–100) + explanation + misconception list  
 
@@ -73,6 +73,3 @@ venv\Scripts\activate.bat # Command Prompt Windows
 ```bash
 streamlit run run.py
 ```
-
-## Notebooks
-1. `notebooks/Orchestrator.ipynb` contains the code for the orchestrating agent and this logic is implemented in the `agents/orchestrator.py`
