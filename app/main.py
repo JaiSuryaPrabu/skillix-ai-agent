@@ -1,4 +1,4 @@
-# main.py
+# ------ main.py ------ #
 
 import json
 import streamlit as st
