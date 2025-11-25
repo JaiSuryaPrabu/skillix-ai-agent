@@ -1,70 +1,36 @@
-"""
-Orchestrator agent - The main agent who splits the work to specialized agents
-
-This agent decides which phase we're in:
-1. NEW SESSION -> Collect user preferences -> Kick off Research Phase
-2. RESEARCH PHASE -> Sequential : Context Gathering -> Planning Agent
-3. TEACHING PHASE -> Loop : Teaching Agent -> Evaluation Agent (Continuous interaction)
-4. END SESSION -> Final Report Agent
-"""
+# the main agent that delegates tasks to specialized agents
 
 from google.adk.agents import Agent
-from google.adk.models import Gemini
-from config.settings import settings
+from google.adk.tools import AgentTool
 
-ORCHESTRATOR_PROMPT = """
-You are the Orchestrator Agent of Skillix, a multi-agent personalized tutoring system.
-
-Your job is to manage the entire learning journey by deciding which phase to activate based on the current state.
-
-### Phase Detection Rules (You decide based on session state and user input):
-
-1. **New Session (no user_profile in state)**  
-   → Collect preferences ONCE using friendly conversation  
-   → Confirm and output exactly:
-   <CONFIRMED_PROFILE>
-   {
-     "topic": "...",
-     "level": "Beginner|Intermediate|Advanced",
-     "style": "theory-first|application-first|hybrid",
-     "mode": "interactive|guided"
-   }
-   </CONFIRMED_PROFILE>
-
-2. **Research Phase** (has user_profile but no syllabus in state)  
-   → Automatically trigger research workflow (no user interaction needed)
-   → Respond: "I'm researching the best resources and creating your personalized syllabus..."
-
-3. **Teaching Phase** (has syllabus in state, ongoing conversation)  
-   → Delegate EVERY user message to the Teaching + Evaluating loop
-   → Just forward — do not interfere
-
-4. **End Session** (user says "finish", "done", "generate report", etc.)  
-   → Trigger final report generation
-   → Respond: "Generating your learning report..."
-
-### Tools You Have:
-- research_sequential: Runs Context Gatherer → Planner sequentially
-- teaching_loop: Runs Teaching ↔ Evaluating in a loop until done
-- generate_report: Runs the Final Report agent
-
-### Response Rules:
-- For phase 1: Only collect and confirm profile
-- For phase 2 to 4: Short status message + tool call
-- NEVER teach content yourself
-- Be warm, encouraging, and professional
-"""
+from .specialized_agents.research_phase import create_research_phase
+from .specialized_agents.action_phase import create_action_phase_agent_v2
+from .specialized_agents.report_agent import create_final_report_agent
 
 def create_orchestrator_agent() -> Agent:
-    model = Gemini(
-        model=settings.GEMINI_MODEL_NAME
-    )
+    '''
+    This is the deep agent level orchestrator that uses all the specialzied agents as Tools and decides the full flow dynamically
+    '''
+    return Agent(
+        name="RootOrchestrator",
+        model="gemini-2.5-flash-lite",
+        description="Root orchestrator that manages the entire learning system for the student",
+        instruction="""You are the Root Orchestrator Agent and you have three phases available as tools :
+        1. ResearchPhaseAgent - Gathers knowledge and creates a personalized learning plan
+        2. TeachingLoopAgent - Runs teaching with evaluation until the student masters the material
+        3. FinalReportAgent - Creates a final report for the student's overall performance
 
-    orchestrator = Agent(
-        name="Orchestrator",
-        model=model,
-        instruction=ORCHESTRATOR_PROMPT,
-        # agents as tools needs to be added here
-    )
+        Critical workflow rules - you must follow this order:
+        1. Alway start by calling ResearchPhaseAgent for any new topic
+        2. Once the learning_plan exists, call TeachingLoopAgent
+        3. When the teaching loop finishes, call FinalReportAgent
+        4. After the final report is generated, end the session with warm congratulations
 
-    return orchestrator
+        You can see the current state (learning_plan,evaluation results, current_step_index) at any time. Never skip steps. Never generate reports on your own and never teach without a plan. Be encouraging, professional and precise.
+        """,
+        tools = [
+            AgentTool(create_research_phase()),
+            AgentTool(create_action_phase_agent_v2()),
+            AgentTool(create_final_report_agent())
+        ]
+    )
