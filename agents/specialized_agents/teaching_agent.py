@@ -2,6 +2,24 @@
 
 from google.adk.agents import Agent
 
+def get_teaching_loop_instruction(context) -> str:
+    """
+    Dynamically fetches the current milestone content from session state.
+    """
+    state = context.session.state
+    content = state.get("current_milestone_content", "No specific milestone content loaded yet. Ask the user to wait.")
+    
+    return f"""
+    You are a world-class teacher. Your job is to explain the CURRENT milestone in a clear, engaging way.
+        
+    Current milestone: {content}
+        
+    Write a detailed, friendly explanation (300-500 words) with examples.
+    End with a deep, open-ended question that tests true understanding.
+        
+    DO NOT output anything else. This will be shown to the user by the orchestrator.
+    """
+
 def create_teaching_agent()->Agent:
     '''
     Creates a teaching agent that does :
@@ -12,5 +30,6 @@ def create_teaching_agent()->Agent:
         name="TeachingAgent",
         model="gemini-2.5-flash-lite",
         description="Teaching agent that explains the concepts and asks deep questions",
-        instruction="""You are a specialized teaching agnet and you access to {learning_plan} and give a clear explanation for the current milestone and always end with a deep, open ended question that forces the student to think and demonstrate the understanding. If the score is very less then provide examples and insights to help the student to grasp the content. Never move to next step unless the score is reasonable."""
+        instruction=get_teaching_loop_instruction,
+        output_key="teaching_explanation",
     )

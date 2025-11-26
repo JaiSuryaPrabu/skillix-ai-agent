@@ -27,6 +27,6 @@ def create_evaluation_agent() -> Agent:
         model="gemini-2.5-flash-lite",
         description="Strict but fair technology examiner that scores answers and detects deep misconceptions",
         instruction="""You are evaluation agent and your task to get the current learning objective and student's answer and deeply evaluate understanding of the core concept and score from the scale of 0 to 100 based on few rules like 90 to 100 for exceptional depth, 80 to 90 for solid grasp, 70-80 parital but flawed, 60 - 70 okay but needed improvements and less than 60 is a major misconceptions and based on the scoring identify the precise misconceptions and write clearn, constructive feedback and set mastered as True only when score is greater than 80. Output must be valid type matching the EvaluationResult schema""",
-        output_key="evaluation_result",
+        output_key="latest_eval_result",
         output_schema=EvaluationResult
     )

@@ -4,18 +4,17 @@ from pydantic import BaseModel, Field
 from google.adk.agents import Agent
 
 class LearningJourneyReport(BaseModel):
-    '''
-    Complete final report of the student's learning journey
-    '''
-    topic: str = Field(..., description="The main topic studied")
-    total_milestones: int = Field(..., description="Total steps in the plan")
-    completed_milestones: int = Field(..., description="How many steps were fully mastered")
-    overall_mastery_score: float = Field(..., description="Average score across completed steps")
-    strongest_areas: List[str] = Field(..., description="Top 2-3 concepts the student excelled at")
-    areas_for_improvement: List[str] = Field(..., description="Key misconceptions or weak areas")
-    key_takeaways: List[str] = Field(..., description="3-5 most important insights from the journey")
-    recommendation: str = Field(..., description="Next steps or deeper topics to explore")
-    final_grade: str = Field(..., description="A+, A, B+, etc. — motivational grade")
+    topic: str
+    total_milestones: int
+    mastered_milestones_count: int
+    mastered_milestone_list: List[str] = Field(..., description="Exact objectives mastered")
+    overall_mastery_score: float
+    strongest_areas: List[str]
+    areas_for_improvement: List[str]
+    key_takeaways: List[str]
+    recommendation: str
+    final_grade: str
+    total_attempts: int = Field(..., description="Total teaching loops run (insight into effort)")
 
 
 def create_final_report_agent() -> Agent:
@@ -32,28 +31,44 @@ def create_final_report_agent() -> Agent:
         instruction="""
 You are FinalReportAgent — a world-class learning experience designer and analyst.
 
-You have access to:
-- The full learning_plan (all milestones)
-- evaluation_result from each completed step
-- current_step_index (how far the student progressed)
-- All scores, feedback, and misconceptions
+- Topic: {topic}
+- Full learning_plan with {total_milestones} milestones
+- evaluation_history: a list of EVERY mastered milestone with real scores, feedback, and misconceptions
+- completed_milestones: list of milestone objectives the student actually mastered
+- current_step_index: how far they got
 
-Your mission:
-Create a warm, encouraging, and deeply insightful final report.
+YOUR MISSION: Write a warm, honest, and deeply insightful final report using ONLY real data.
 
-Include:
-1. Clear summary of progress (X out of Y milestones mastered)
-2. Overall mastery score (average of all evaluation scores)
-3. Strongest areas (where student scored 90+)
-4. Areas for improvement (recurring misconceptions)
-5. 3-5 key takeaways the student truly internalized
-6. Personalized recommendation for next steps
+REQUIRED SECTIONS:
+1. Progress Summary
+   - "You mastered X out of Y milestones"
+   - List the mastered milestone objectives clearly
 
-Tone: Professional, warm, encouraging, and precise.
-End with a motivational final grade (A+, A, B+, etc.).
+2. Overall Mastery Score
+   - Calculate: average of all scores in evaluation_history
+   - Show the number
 
-Output must be valid JSON matching the LearningJourneyReport schema.
+3. Strongest Areas
+   - Look for milestones with score ≥ 90
+   - Name 2-3 specific concepts
+
+4. Areas for Improvement
+   - Find recurring themes in feedback/misconceptions across history
+   - Be specific but encouraging
+
+5. Key Takeaways (3-5 bullet points)
+   - What the student truly internalized (based on high scores + clean understanding)
+
+6. Personalized Next Steps
+   - Recommend deeper topics or review areas
+
+7. Final Motivational Grade
+   - A+, A, B+, etc. based on % mastered and average score
+
+Tone: Warm, proud, precise, human. Never generic.
+
+Use only the real evaluation_history — do not invent progress.
 """,
         output_schema=LearningJourneyReport,
-        output_key="final_learning_report",
+        output_key="final_report",
     )

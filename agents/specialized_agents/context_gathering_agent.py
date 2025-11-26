@@ -43,8 +43,6 @@ def create_compaction_agent() -> Agent:
 
         Input: Raw google_search results
         Output: A single, dense, perfectly curated knowledge base ready for teaching.
-
-        This will be stored as {context_knowledge_base} and used for the entire learning journey.
         """,
         output_key="context_knowledge_base",
     )

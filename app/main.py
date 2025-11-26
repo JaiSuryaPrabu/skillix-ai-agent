@@ -1,26 +1,30 @@
 # ------ main.py ------ #
 import sys
 import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import json
 import streamlit as st
-from agents.orchestrator import create_orchestrator_agent
-from google.adk.runners import Runner
+
+# Add parent directory to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from google.adk.runners import InMemoryRunner
 from google.genai import types
+
+# Your existing agent logic
+from agents.orchestrator import create_orchestrator_agent
+
+
+# --------- Constants --------- #
+APP_NAME = "Skillix AI"
+USER_ID = "student_01"
+SESSION_ID = "session_01"
 
 
 # --------- Orchestrator + Runner (created once) --------- #
 @st.cache_resource
-def get_runner() -> Runner:
-    """
-    Initialize the orchestrator agent and wrap it in an ADK Runner.
-    This is created once per app session and reused.
-    """
+def get_runner() -> InMemoryRunner:
     orchestrator_agent = create_orchestrator_agent()
-    return Runner(orchestrator_agent)
-
+    return InMemoryRunner(agent=orchestrator_agent, app_name=APP_NAME)
 
 runner = get_runner()
 
@@ -32,7 +36,8 @@ st.set_page_config(
     layout="centered",
 )
 
-# ---------- Custom CSS for nicer UI ----------
+
+# ---------- Custom CSS (Same beautiful style as Old UI) ----------
 st.markdown(
     """
 <style>
@@ -90,6 +95,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
 # ---------- Header ----------
 st.markdown(
     """
@@ -107,7 +113,6 @@ st.markdown(
 
 # --------- Session State for Chat History --------- #
 if "messages" not in st.session_state:
-    # Each item: {"role": "user" | "assistant", "content": str}
     st.session_state["messages"] = []
 
 
@@ -116,85 +121,67 @@ col_info, col_reset = st.columns([4, 1])
 
 with col_info:
     st.markdown(
-        "💬 **Chat with Skillix** — ask questions, answer prompts, and get evaluated in real time."
+        "Chat with Skillix — ask questions, answer prompts, and get evaluated in real time."
     )
 
 with col_reset:
     if st.button("🔁 Reset chat", use_container_width=True):
         st.session_state["messages"] = []
-        st.experimental_rerun()
+        st.rerun()
 
 
-# --------- Helper: Extract text from Runner result --------- #
+# --------- Enhanced extract_text_from_result (compatible with InMemoryRunner) --------- #
 def extract_text_from_result(result) -> str:
-    """
-    Extracts a clean text string from the Runner output, handling native
-    google.genai types, dictionaries, and plain strings.
-    """
+    if isinstance(result, list):
+        text_parts = []
+        for item in result:
+            if hasattr(item, "is_final_response") and item.is_final_response():
+                if hasattr(item, "content") and item.content and item.content.parts:
+                    for part in item.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            txt = part.text.strip()
+                            if txt and len(txt) > 5:
+                                if not any(noise in txt for noise in ["<ctrl", "print(default_api", "Tool call", "DEBUG"]):
+                                    text_parts.append(txt)
+        return "\n".join(text_parts) or "I'm thinking..."
 
-    # 1. Handle native google.genai types
+    if hasattr(result, "content"):
+        result = result.content
 
-    # a) Top-level GenerateContentResponse from google.genai
     if isinstance(result, types.GenerateContentResponse):
-        # .text is a convenience property that aggregates text parts
         try:
             return result.text or ""
         except ValueError:
-            # Fallback if the response was blocked or empty
-            return "⚠️ No text content generated (possibly blocked)."
+            return "No text content generated (possibly blocked)."
 
-    # b) Content object (standard message container)
     if isinstance(result, types.Content):
-        text_parts = []
-        if getattr(result, "parts", None):
-            for part in result.parts:
-                if getattr(part, "text", None):
-                    text_parts.append(part.text)
-        return "".join(text_parts)
+        return "".join(part.text for part in (result.parts or []) if part.text)
 
-    # c) Single Part object
     if isinstance(result, types.Part):
-        return getattr(result, "text", "") or ""
+        return result.text or ""
 
-    # 2. Handle plain string directly
     if isinstance(result, str):
         return result
 
-    # 3. Handle dict-based outputs (common in some ADK configurations)
     if isinstance(result, dict):
-        # If output is wrapped in {"output": ...}
-        if "output" in result:
-            out = result["output"]
-            if isinstance(out, dict):
-                if "text" in out:
-                    return str(out["text"])
-                if "output_text" in out:
-                    return str(out["output_text"])
-            return str(out)
-
-        # Direct keys in the dict
-        for key in ("text", "output_text", "message"):
+        for key in ("text", "output_text", "message", "output"):
             if key in result:
                 return str(result[key])
-
-        # Fallback: pretty-print the dict as JSON
         try:
-            return "```json\n" + json.dumps(result, indent=2, default=str) + "\n```"
-        except Exception:
+            return f"```json\n{json.dumps(result, indent=2, default=str)}\n```"
+        except:
             return str(result)
 
-    # 4. Final fallback
     try:
         return str(result)
-    except Exception:
-        return "⚠️ Unable to display response."
+    except:
+        return "Unable to display response."
 
 
 # ---------- Chat card (history) ----------
 with st.container():
     st.markdown('<div class="chat-card">', unsafe_allow_html=True)
 
-    # Show previous messages
     for msg in st.session_state["messages"]:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -206,29 +193,35 @@ with st.container():
 user_input = st.chat_input("Type your question or answer here...")
 
 if user_input:
-    # 1) add user message to history and show it
+    # Add user message
     st.session_state["messages"].append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # 2) call orchestrator via Runner
-    try:
-        result = runner.run_debug(user_input)
-        bot_reply = extract_text_from_result(result)
-    except Exception as e:
-        # fallback message if orchestrator fails
-        bot_reply = f"⚠️ Error while calling orchestrator:\n\n`{e}`"
+    # Call orchestrator using InMemoryRunner (with session context)
+    with st.spinner("Skillix is thinking..."):
+        try:
+            raw_result = runner.run_debug(
+                user_input,
+                session_id=SESSION_ID,
+                user_id=USER_ID
+            )
+            bot_reply = extract_text_from_result(raw_result)
+            if not bot_reply.strip():
+                bot_reply = "I'm ready! How can I help you learn today?"
+        except Exception as e:
+            bot_reply = f"Error: {e}"
 
-    # 3) show bot reply
+    # Show assistant reply
     with st.chat_message("assistant"):
         st.markdown(bot_reply)
 
-    # 4) store bot reply in history
-    st.session_state["messages"].append(
-        {"role": "assistant", "content": bot_reply}
-    )
+    # Store in history
+    st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
 
+
+# ---------- Footer Hint ----------
 st.markdown(
-    '<div class="input-hint">Skillix is powered by multi-agent orchestration.</div>',
+    '<div class="input-hint">Skillix is powered by Google ADK.</div>',
     unsafe_allow_html=True,
 )
