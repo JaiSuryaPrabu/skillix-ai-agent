@@ -1,8 +1,8 @@
 from google.adk.agents import Agent
 from google.adk.tools import AgentTool
-from agents.specialized_agents.teaching_agent import create_teaching_agent
+
 from agents.specialized_agents.evaluating_agent import create_evaluation_agent
-from agents.memory.session_state import EvaluationResult
+from agents.specialized_agents.teaching_agent import create_teaching_agent
 
 teaching_agent = create_teaching_agent()
 evaluation_agent = create_evaluation_agent()

@@ -3,10 +3,10 @@
 from google.adk.agents import Agent
 from google.adk.tools import AgentTool
 
-from .specialized_agents.research_phase import create_research_phase
-from .specialized_agents.action_phase import create_action_phase_agent
-from .specialized_agents.report_agent import create_final_report_agent
 from .specialized_agents.action_phase_dynamic import create_dynamic_teaching_orchestrator
+from .specialized_agents.report_agent import create_final_report_agent
+from .specialized_agents.research_phase import create_research_phase
+
 
 def create_orchestrator_agent() -> Agent:
     '''

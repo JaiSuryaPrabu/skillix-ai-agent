@@ -1,12 +1,13 @@
 # Action phase connects the teaching agent and evaluation agent as one
 
+from typing import Dict, Any
+
 from google.adk.agents import Agent, LoopAgent, SequentialAgent
 from google.adk.tools import FunctionTool  # Use FunctionTool for exit_loop (as in sample)
-from agents.memory.session_state import EvaluationResult
-from agents.specialized_agents.teaching_agent import create_teaching_agent
-from agents.specialized_agents.evaluating_agent import create_evaluation_agent
 
-from typing import Dict, Any
+from agents.specialized_agents.evaluating_agent import create_evaluation_agent
+from agents.specialized_agents.teaching_agent import create_teaching_agent
+
 
 def should_continue_loop(
     evaluation_result: Dict[str, Any],
