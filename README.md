@@ -65,11 +65,11 @@ uv sync
 ```
 3. Activate your virtual environment by
 ```bash
-source venv/bin/activate # macOS/Linux
+source venv/bin/activate # macOS/Linux (change venv to your actual venv environment name)
 venv\Scripts\activate.bat # Command Prompt Windows
 .\venv\Scripts\Activate.ps1 # PowerShell Windows
 ```
-3. `run.py` is used to run the streamlit app and to run the app (not yet implemented)
+3. `main.py` is used to run the streamlit app and to run the app. Go to app directory using cd app and run the below command to run the streamlit.
 ```bash
-streamlit run run.py
+streamlit run main.py
 ```
