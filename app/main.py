@@ -26,7 +26,7 @@ st.title("🤖 Learn better with Skillix AI")
 # Initialize chat history in session state
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hi! I'm a your tutor. Let's start learning by mentioning topic and your expertise level in that topic!"}
+        {"role": "assistant", "content": "Hi! I'm your tutor. Let's start learning by mentioning topic and your expertise level in that topic!"}
     ]
 
 #extract result from the chat
