@@ -3,6 +3,8 @@ import sys
 import os
 import json
 import streamlit as st
+import asyncio
+from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -10,23 +12,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 
-# Your existing agent logic
-from agents.orchestrator import create_orchestrator_agent
+from agents.agents import runner
 
+load_dotenv()
 
 # --------- Constants --------- #
 APP_NAME = "Skillix AI"
 USER_ID = "student_01"
 SESSION_ID = "session_01"
-
-
-# --------- Orchestrator + Runner (created once) --------- #
-@st.cache_resource
-def get_runner() -> InMemoryRunner:
-    orchestrator_agent = create_orchestrator_agent()
-    return InMemoryRunner(agent=orchestrator_agent, app_name=APP_NAME)
-
-runner = get_runner()
 
 
 # --------- Streamlit Page Setup --------- #
@@ -190,35 +183,37 @@ with st.container():
 
 
 # ---------- Chat input + orchestrator call ----------
-user_input = st.chat_input("Type your question or answer here...")
+async def chat_loop():
+    user_input = st.chat_input("Type your question or answer here...")
 
-if user_input:
-    # Add user message
-    st.session_state["messages"].append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
+    if user_input:
+        # Add user message
+        st.session_state["messages"].append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
 
-    # Call orchestrator using InMemoryRunner (with session context)
-    with st.spinner("Skillix is thinking..."):
-        try:
-            raw_result = runner.run_debug(
-                user_input,
-                session_id=SESSION_ID,
-                user_id=USER_ID
-            )
-            bot_reply = extract_text_from_result(raw_result)
-            if not bot_reply.strip():
-                bot_reply = "I'm ready! How can I help you learn today?"
-        except Exception as e:
-            bot_reply = f"Error: {e}"
+        # Call orchestrator using InMemoryRunner (with session context)
+        with st.spinner("Skillix is thinking..."):
+            try:
+                raw_result = await runner.run_debug(
+                    user_input,
+                    session_id=SESSION_ID,
+                    user_id=USER_ID
+                )
+                bot_reply = extract_text_from_result(raw_result)
+                if not bot_reply.strip():
+                    bot_reply = "I'm ready! How can I help you learn today?"
+            except Exception as e:
+                bot_reply = f"Error: {e}"
 
-    # Show assistant reply
-    with st.chat_message("assistant"):
-        st.markdown(bot_reply)
+        # Show assistant reply
+        with st.chat_message("assistant"):
+            st.markdown(bot_reply)
 
-    # Store in history
-    st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
+        # Store in history
+        st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
 
+asyncio.run(chat_loop())
 
 # ---------- Footer Hint ----------
 st.markdown(
