@@ -5,9 +5,6 @@ from google.adk.models import Gemini
 MODEL_NAME = "gemini-2.5-flash-lite"
 MODEL = Gemini(model=MODEL_NAME)
 
-session_service = InMemorySessionService()
-memory_service = InMemoryMemoryService()
-
 # Content Search Agent: Its job is to use the google_search tool and present content.
 search_agent = LlmAgent(
     name="SearchAgent",
