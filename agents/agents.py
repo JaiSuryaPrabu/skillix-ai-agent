@@ -8,10 +8,11 @@ from google.adk.memory import InMemoryMemoryService
 MODEL_NAME = "gemini-2.5-flash-lite"
 MODEL = Gemini(model=MODEL_NAME)
 
+# ADK's built-in Memory Service. Create Session Service
 session_service = InMemorySessionService()
 memory_service = InMemoryMemoryService()
 
-# search agent 
+# Content Search Agent: Its job is to use the google_search tool and present content.
 search_agent = LlmAgent(
     name="SearchAgent",
     description="Search Agent will search the internet and provide result based on the request",
@@ -22,7 +23,7 @@ search_agent = LlmAgent(
 
 search_agent_tool = AgentTool(search_agent)
 
-# planning agent
+# planning agent - Builds personalized learning syllabus based on user's topic.
 planning_agent = LlmAgent(
     name="PlanningAgent",
     description="Planning agent will plan the syllabus based on the user's topic",
@@ -33,7 +34,7 @@ planning_agent = LlmAgent(
 
 planning_agent_tool = AgentTool(planning_agent)
 
-# teaching agent
+# teaching agent - provides the explanation on a user's topic
 teaching_agent = LlmAgent(
     name="TeachingAgent",
     description="Teaching Agent will provide the explanation or clarify the doubts in a particular topic",
@@ -44,7 +45,7 @@ teaching_agent = LlmAgent(
 
 teaching_agent_tool = AgentTool(teaching_agent)
 
-# evaluation agent
+# evaluation agent - assess the user's understanding on a topic
 evaluation_agent = LlmAgent(
     name="EvaluationAgent",
     description="Evaluation agent is to assess the understanding of the user's learning on the topic",
@@ -60,6 +61,7 @@ async def auto_save_to_memory(callback_context):
         callback_context._invocation_context.session
     )
 
+#Orchestrator agent - Manages the flow of tasks between other agents
 root_orchestrator = LlmAgent(
     name="LearningOrchestrator",
     description="The orchestrator agent that delegates the tasks and managees the learning journey state.",

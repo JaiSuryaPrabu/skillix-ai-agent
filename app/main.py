@@ -1,8 +1,7 @@
-import sys
-import os
-import streamlit as st
-import asyncio
 import json
+import os
+import sys
+
 from dotenv import load_dotenv
 
 # Add parent directory to path
@@ -30,6 +29,7 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "Hi! I'm a your tutor. Let's start learning by mentioning topic and your expertise level in that topic!"}
     ]
 
+#extract result from the chat
 def extract_text_from_result(result) -> str:
     if isinstance(result, list):
         text_parts = []
@@ -94,6 +94,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+#loop for the chat - interactive chat interface
 async def chat_loop():
     if prompt := st.chat_input("Type your message here..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
