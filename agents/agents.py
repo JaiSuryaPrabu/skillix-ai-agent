@@ -1,15 +1,9 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools import AgentTool,google_search,load_memory
 from google.adk.models import Gemini
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-from google.adk.memory import InMemoryMemoryService
 
 MODEL_NAME = "gemini-2.5-flash-lite"
 MODEL = Gemini(model=MODEL_NAME)
-
-session_service = InMemorySessionService()
-memory_service = InMemoryMemoryService()
 
 # search agent 
 search_agent = LlmAgent(
@@ -76,11 +70,3 @@ root_orchestrator = LlmAgent(
     tools=[planning_agent_tool,teaching_agent_tool,evaluation_agent_tool,load_memory],
     after_agent_callback=auto_save_to_memory,
 )
-
-def get_runner():
-    return Runner(
-        agent=root_orchestrator,
-        app_name="SkillixAI",
-        session_service=session_service,
-        memory_service=memory_service
-    )

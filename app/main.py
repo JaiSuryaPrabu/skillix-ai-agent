@@ -9,16 +9,28 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
-from agents.agents import get_runner
+from agents.agents import root_orchestrator
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.memory import InMemoryMemoryService
 from google.genai import types
 import asyncio
 
 load_dotenv()
 
-runner = get_runner()
 APP_NAME = "Skillix AI"
 USER_ID = "student_01"
 SESSION_ID = "session_01"
+
+session_service = InMemorySessionService()
+memory_service = InMemoryMemoryService()
+
+runner = Runner(
+    app_name=APP_NAME,
+    agent=root_orchestrator,
+    session_service=session_service,
+    memory_service=memory_service
+)
 
 # Set page title and layout
 st.set_page_config(page_title="Skillix AI", layout="centered")
