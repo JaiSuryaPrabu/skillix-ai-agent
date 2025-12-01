@@ -77,9 +77,10 @@ root_orchestrator = LlmAgent(
     after_agent_callback=auto_save_to_memory,
 )
 
-runner = Runner(
-    agent=root_orchestrator,
-    app_name="SkillixAI",
-    session_service=session_service,
-    memory_service=memory_service,
-)
+def get_runner():
+    return Runner(
+        agent=root_orchestrator,
+        app_name="SkillixAI",
+        session_service=session_service,
+        memory_service=memory_service
+    )

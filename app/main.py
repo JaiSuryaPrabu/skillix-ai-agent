@@ -1,127 +1,35 @@
-# ------ main.py ------ #
 import sys
 import os
-import json
 import streamlit as st
 import asyncio
+import json
 from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from google.genai import types
 
-from agents.agents import runner
+import streamlit as st
+from agents.agents import get_runner
+from google.genai import types
+import asyncio
 
 load_dotenv()
 
-# --------- Constants --------- #
+runner = get_runner()
 APP_NAME = "Skillix AI"
 USER_ID = "student_01"
 SESSION_ID = "session_01"
 
+# Set page title and layout
+st.set_page_config(page_title="Skillix AI", layout="centered")
+st.title("🤖 Learn better with Skillix AI")
 
-# --------- Streamlit Page Setup --------- #
-st.set_page_config(
-    page_title="Skillix AI",
-    page_icon="🤖",
-    layout="centered",
-)
-
-
-# ---------- Custom CSS (Same beautiful style as Old UI) ----------
-st.markdown(
-    """
-<style>
-    .block-container {
-        max-width: 900px;
-        margin: auto;
-        padding-top: 3rem;
-        padding-bottom: 3rem;
-    }
-
-    /* Title row */
-    .skillix-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.6rem;
-        margin-bottom: 0.25rem;
-    }
-    .skillix-header-icon {
-        font-size: 2.3rem;
-    }
-    .skillix-header-text {
-        font-size: 2.1rem;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-    }
-    .skillix-subtitle {
-        text-align: center;
-        color: #6b7280;
-        font-size: 0.95rem;
-        margin-bottom: 1.5rem;
-    }
-
-    /* Chat card */
-    .chat-card {
-        background: #ffffff;
-        border-radius: 18px;
-        padding: 1.2rem 1.4rem;
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-        border: 1px solid #e5e7eb;
-        min-height: 320px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .input-hint {
-        font-size: 0.85rem;
-        color: #9ca3af;
-        margin-top: 0.4rem;
-        text-align: center;
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-
-# ---------- Header ----------
-st.markdown(
-    """
-<div class="skillix-header">
-  <div class="skillix-header-icon">🤖</div>
-  <div class="skillix-header-text">Skillix AI</div>
-</div>
-<div class="skillix-subtitle">
-  Chat interface connected to the Skillix orchestrator.
-</div>
-""",
-    unsafe_allow_html=True,
-)
-
-
-# --------- Session State for Chat History --------- #
+# Initialize chat history in session state
 if "messages" not in st.session_state:
-    st.session_state["messages"] = []
+    st.session_state.messages = [
+        {"role": "assistant", "content": "Hi! I'm a your tutor. Let's start learning by mentioning topic and your expertise level in that topic!"}
+    ]
 
-
-# --------- Top Row: Info + Reset Button --------- #
-col_info, col_reset = st.columns([4, 1])
-
-with col_info:
-    st.markdown(
-        "Chat with Skillix — ask questions, answer prompts, and get evaluated in real time."
-    )
-
-with col_reset:
-    if st.button("🔁 Reset chat", use_container_width=True):
-        st.session_state["messages"] = []
-        st.rerun()
-
-
-# --------- Enhanced extract_text_from_result (compatible with InMemoryRunner) --------- #
 def extract_text_from_result(result) -> str:
     if isinstance(result, list):
         text_parts = []
@@ -168,53 +76,33 @@ def extract_text_from_result(result) -> str:
     except:
         return "Unable to display response."
 
+async def agent_response(user_message: str) -> str:
+    try:
+        response = await runner.run_debug(
+            user_message,  
+            session_id=SESSION_ID,
+            user_id=USER_ID
+        )
 
-# ---------- Chat card (history) ----------
-with st.container():
-    st.markdown('<div class="chat-card">', unsafe_allow_html=True)
+        return extract_text_from_result(response)
+    except Exception as e:
+        response = f"Error during agent run: {str(e)}"
+    
+    return response
 
-    for msg in st.session_state["messages"]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-# ---------- Chat input + orchestrator call ----------
 async def chat_loop():
-    user_input = st.chat_input("Type your question or answer here...")
-
-    if user_input:
-        # Add user message
-        st.session_state["messages"].append({"role": "user", "content": user_input})
+    if prompt := st.chat_input("Type your message here..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
-            st.markdown(user_input)
+            st.markdown(prompt)
 
-        # Call orchestrator using InMemoryRunner (with session context)
-        with st.spinner("Skillix is thinking..."):
-            try:
-                raw_result = await runner.run_debug(
-                    user_input,
-                    session_id=SESSION_ID,
-                    user_id=USER_ID
-                )
-                bot_reply = extract_text_from_result(raw_result)
-                if not bot_reply.strip():
-                    bot_reply = "I'm ready! How can I help you learn today?"
-            except Exception as e:
-                bot_reply = f"Error: {e}"
-
-        # Show assistant reply
+        response = await agent_response(prompt)
+        st.session_state.messages.append({"role": "assistant", "content": response})
         with st.chat_message("assistant"):
-            st.markdown(bot_reply)
-
-        # Store in history
-        st.session_state["messages"].append({"role": "assistant", "content": bot_reply})
+            st.markdown(response)
 
 asyncio.run(chat_loop())
-
-# ---------- Footer Hint ----------
-st.markdown(
-    '<div class="input-hint">Skillix is powered by Google ADK.</div>',
-    unsafe_allow_html=True,
-)
