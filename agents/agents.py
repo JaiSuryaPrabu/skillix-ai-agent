@@ -1,7 +1,7 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools import AgentTool,google_search,load_memory
 from google.adk.models import Gemini
-from google.adk.runners import InMemoryRunner
+from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.adk.memory import InMemoryMemoryService
 
@@ -77,7 +77,9 @@ root_orchestrator = LlmAgent(
     after_agent_callback=auto_save_to_memory,
 )
 
-runner = InMemoryRunner(
+runner = Runner(
     agent=root_orchestrator,
     app_name="SkillixAI",
+    session_service=session_service,
+    memory_service=memory_service,
 )

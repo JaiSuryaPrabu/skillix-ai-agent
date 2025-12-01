@@ -8,8 +8,6 @@ from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from google.adk.runners import InMemoryRunner
 from google.genai import types
 
 from agents.agents import runner
