@@ -16,41 +16,27 @@ High-quality human tutoring is proven to be the most effective learning interven
 ### Solution Statement
 Skillix uses a multi-agent architecture where each agent has a clearly defined role, allowing the system to handle the end-to-end complexity of personalized education:
 
-1. **Orchestrator Agent** – Acts as the “tutor session manager” that gathers initial user preferences and coordinates the entire workflow dynamically.
-2. **Context Gathering Agent** – Searches the web, curates high-quality resources, and builds a rich knowledge base stored in long-term memory.
-3. **Planning Agent** – Designs a personalized syllabus/roadmap based on the gathered context, user’s current knowledge level, and preferred learning style (theory-first, application-first, or hybrid).
+1. **Orchestrator Agent** – Acts as the “tutor session manager” that gathers initial user preferences and coordinates the entire syb agents dynamically
+2. **Search Agent** – Searches the web, curates high-quality resources.
+3. **Planning Agent** – Designs a personalized syllabus/roadmap based on user’s current knowledge level.
 4. **Teaching Agent** – Runs the interactive session using Socratic questioning and active recall. It forces the student to think instead of passively receiving information. Uses long-term memory for context and session state to remember everything that happened in previous interactions.
 5. **Evaluating Agent** – Scores every student response in real-time (depth of understanding, partial credit, misconceptions) and updates performance memory.
-6. **Final Report Agent** – At the end of the topic (or on demand), generates a detailed report with progress, identified strengths/weaknesses, recommended next topics, and even the student’s inferred learning style.
 
 ![Flowchart](assets/flow_chart.png)
 
-Agents communicate sequentially and in parallels (e.g., Teaching → Evaluating → Teaching again with adjusted difficulty), demonstrating sequential agents, parallel agents, session & memory management, custom tools, and long-term memory.
-
-### Key ADK concepts demonstrated
-
-- Multi-agent system with sequential and parallel agents  
-- Sub-agents and delegation  
-- Tools (web search via custom Google Search tool, custom evaluation scorer, memory read/write tools)  
-- Sessions & state management (InMemorySessionService)  
-- Long-term memory (Memory Bank for topic resources and user performance history)  
-- Context compaction (summarizing gathered resources before storing)  
-- Observability (structured logging of every agent turn and score)
+### Shared Components
+- Long-Term Memory : Single shared memory storing:
+    - Curated topic resources and summaries (from Search Agent)
+    - Full conversation history
+    - User performance data, identified strengths/weaknesses, and inferred learning style
+- Session State Management: Handled by the Orchestrator using ADK’s InMemorySessionService (or persistent equivalent)
 
 ### Essential Tools Implemented
-- Web research tool (using Google Search)  
-- Memory read/write tools (short-term session + long-term Memory Bank)  
-- Custom evaluation tool that returns a structured score (0–100) + explanation + misconception list  
+- Multi-agent delegation (Orchestrator delegates to specialized agents)
+- Built-in and custom tools (Google Search tool + memory)
+- Session state persistence
 
-### Value Statement
-> Need to add the value based on the true values
-
-If I had more time I would:
-- Add voice interaction for presenting a topic or enhanced QA sessions 
-- Deploy the entire system on Vertex AI Agent Engine 
-- Integrate MCP servers for real-time collaborative learning between multiple students
-
-The link for the capstone project writeup is [Skillix: Multi-agent AI for student skill mastery](https://www.kaggle.com/competitions/agents-intensive-capstone-project/writeups/new-writeup-1763366506849)
+The link for the capstone project writeup is [Skillix: Multi-agent AI for student skill mastery](https://www.kaggle.com/competitions/agents-intensive-capstone-project/writeups/skillix-multi-agent-ai-for-student-skill-mastery)
 
 Skillix proves that multi-agent systems can deliver truly personalized education at scale, making world-class tutoring accessible to everyone.
 
@@ -71,5 +57,5 @@ venv\Scripts\activate.bat # Command Prompt Windows
 ```
 3. `main.py` is used to run the streamlit app and to run the app. Go to app directory using cd app and run the below command to run the streamlit.
 ```bash
-streamlit run main.py
+streamlit run app/main.py
 ```
