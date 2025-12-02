@@ -24,12 +24,23 @@ SESSION_ID = "session_01"
 session_service = InMemorySessionService()
 memory_service = InMemoryMemoryService()
 
-runner = Runner(
-    app_name=APP_NAME,
-    agent=root_orchestrator,
-    session_service=session_service,
-    memory_service=memory_service
-)
+@st.cache_resource
+def get_adk_runner():
+    # This function will only run once per session
+    return Runner(
+        app_name=APP_NAME,
+        agent=root_orchestrator,
+        session_service=session_service,
+        memory_service=memory_service
+    )
+
+runner = get_adk_runner()
+# runner = Runner(
+#     app_name=APP_NAME,
+#     agent=root_orchestrator,
+#     session_service=session_service,
+#     memory_service=memory_service
+# )
 
 # Set page title and layout
 st.set_page_config(page_title="Skillix AI", layout="centered")
